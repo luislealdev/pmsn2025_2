@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:pmsn2025_2/firebase/plants_firebase.dart';
+import 'package:pmsn2025_2/screens/flora/add_plant_screen.dart';
 import 'package:pmsn2025_2/screens/flora/plant_screen.dart';
 import 'package:pmsn2025_2/screens/flora/account_screen.dart';
 import 'package:pmsn2025_2/screens/flora/cart_screen.dart';
 
-class FloraHomeScreen extends StatelessWidget {
+class FloraHomeScreen extends StatefulWidget {
   FloraHomeScreen({super.key});
+
+  @override
+  State<FloraHomeScreen> createState() => _FloraHomeScreenState();
+}
+
+class _FloraHomeScreenState extends State<FloraHomeScreen> {
+
+  PlantsFirebase plantsFirebase = PlantsFirebase();
+
 
   // Image, name, price
   final List<Map<String, String>> plants = [
@@ -16,25 +27,36 @@ class FloraHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // Asegura que el fondo sea exactamente blanco
+      backgroundColor:
+          Colors.white, // Asegura que el fondo sea exactamente blanco
       appBar: AppBar(
         elevation: 0, // Elimina completamente la elevación/sombra
         shadowColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent, // Elimina el tinte de superficie en Material 3
+        surfaceTintColor:
+            Colors.transparent, // Elimina el tinte de superficie en Material 3
         leading: Icon(Icons.menu, color: Colors.black38),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black, // Asegura que el color del contenido sea consistente
+        foregroundColor:
+            Colors.black, // Asegura que el color del contenido sea consistente
         actions: [
           GestureDetector(
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => AccountScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => AccountScreen()),
               );
             },
             child: Icon(Icons.account_circle_outlined, color: Colors.black38),
+          ),
+          SizedBox(width: 6),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddPlantScreen()),
+              );
+            },
+            child: Icon(Icons.add, color: Colors.black38),
           ),
           SizedBox(width: 16),
         ],
@@ -45,9 +67,7 @@ class FloraHomeScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => CartScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => CartScreen()),
                 );
               },
               child: Container(
@@ -92,13 +112,17 @@ class FloraHomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Título centrado con logo
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset('assets/flora/flora_logo.png', height: 28, width: 28),
+                  Image.asset(
+                    'assets/flora/flora_logo.png',
+                    height: 28,
+                    width: 28,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     "FLORA",
@@ -111,7 +135,7 @@ class FloraHomeScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Espacio para balancear el diseño
             SizedBox(width: 40),
           ],
