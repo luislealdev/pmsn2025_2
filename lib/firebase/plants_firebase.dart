@@ -22,6 +22,7 @@ class PlantsFirebase {
   }
 
   Stream<QuerySnapshot> selectAllPlants() {
+    print(floraCollection!.snapshots());
     return floraCollection!.snapshots();
   }
 }

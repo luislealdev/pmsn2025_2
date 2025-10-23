@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PlantScreen extends StatefulWidget {
-  final Map<String, String> plant;
+  final Map<String, dynamic> plant;
 
   const PlantScreen({super.key, required this.plant});
 
@@ -34,10 +34,7 @@ class _PlantScreenState extends State<PlantScreen> {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.green[600]!,
-                        Colors.green[400]!,
-                      ],
+                      colors: [Colors.green[600]!, Colors.green[400]!],
                     ),
                   ),
                 ),
@@ -45,14 +42,11 @@ class _PlantScreenState extends State<PlantScreen> {
               // Fondo blanco inferior
               Expanded(
                 flex: 1,
-                child: Container(
-                  width: double.infinity,
-                  color: Colors.white,
-                ),
+                child: Container(width: double.infinity, color: Colors.white),
               ),
             ],
           ),
-          
+
           // Contenido scrolleable
           SingleChildScrollView(
             child: Column(
@@ -72,7 +66,10 @@ class _PlantScreenState extends State<PlantScreen> {
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Icon(Icons.arrow_back, color: Colors.grey[800]),
+                            child: Icon(
+                              Icons.arrow_back,
+                              color: Colors.grey[800],
+                            ),
                           ),
                         ),
                         GestureDetector(
@@ -88,7 +85,9 @@ class _PlantScreenState extends State<PlantScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
-                              isFavorite ? Icons.favorite : Icons.favorite_border,
+                              isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
                               color: isFavorite ? Colors.red : Colors.grey[800],
                             ),
                           ),
@@ -97,7 +96,7 @@ class _PlantScreenState extends State<PlantScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Imagen flotante de la planta
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -124,13 +123,15 @@ class _PlantScreenState extends State<PlantScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Información de la planta
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(30),
+                    ),
                   ),
                   child: Padding(
                     padding: EdgeInsets.all(24),
@@ -174,16 +175,20 @@ class _PlantScreenState extends State<PlantScreen> {
                               child: Row(
                                 children: [
                                   IconButton(
-                                    onPressed: quantity > 1 ? () {
-                                      setState(() {
-                                        quantity--;
-                                      });
-                                    } : null,
+                                    onPressed: quantity > 1
+                                        ? () {
+                                            setState(() {
+                                              quantity--;
+                                            });
+                                          }
+                                        : null,
                                     icon: Icon(Icons.remove),
                                     color: Colors.grey[600],
                                   ),
                                   Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 16),
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
                                     child: Text(
                                       '$quantity',
                                       style: TextStyle(
@@ -206,16 +211,18 @@ class _PlantScreenState extends State<PlantScreen> {
                             ),
                           ],
                         ),
-                        
+
                         SizedBox(height: 20),
-                        
+
                         // Rating y reseñas
                         Row(
                           children: [
                             ...List.generate(5, (index) {
                               return Icon(
                                 Icons.star,
-                                color: index < 4 ? Colors.amber : Colors.grey[300],
+                                color: index < 4
+                                    ? Colors.amber
+                                    : Colors.grey[300],
                                 size: 20,
                               );
                             }),
@@ -229,9 +236,9 @@ class _PlantScreenState extends State<PlantScreen> {
                             ),
                           ],
                         ),
-                        
+
                         SizedBox(height: 24),
-                        
+
                         // About the plant
                         Text(
                           'About the Plant',
@@ -250,9 +257,9 @@ class _PlantScreenState extends State<PlantScreen> {
                             height: 1.5,
                           ),
                         ),
-                        
+
                         SizedBox(height: 24),
-                        
+
                         // How to care
                         Text(
                           'How to Care',
@@ -263,7 +270,7 @@ class _PlantScreenState extends State<PlantScreen> {
                           ),
                         ),
                         SizedBox(height: 16),
-                        
+
                         // Cuidados en grid
                         Row(
                           children: [
@@ -308,7 +315,7 @@ class _PlantScreenState extends State<PlantScreen> {
                             ),
                           ],
                         ),
-                        
+
                         SizedBox(height: 120), // Espacio para los botones fijos
                       ],
                     ),
@@ -319,7 +326,7 @@ class _PlantScreenState extends State<PlantScreen> {
           ),
         ],
       ),
-      
+
       // Botones inferiores fijos
       bottomNavigationBar: Container(
         padding: EdgeInsets.all(24),
@@ -346,9 +353,9 @@ class _PlantScreenState extends State<PlantScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        isFavorite 
-                          ? 'Added to favorites' 
-                          : 'Removed from favorites'
+                        isFavorite
+                            ? 'Added to favorites'
+                            : 'Removed from favorites',
                       ),
                       backgroundColor: Colors.grey[700],
                       behavior: SnackBarBehavior.floating,
@@ -384,7 +391,7 @@ class _PlantScreenState extends State<PlantScreen> {
               ),
             ),
             SizedBox(width: 16),
-            
+
             // Botón Buy
             Expanded(
               child: ElevatedButton(
@@ -427,7 +434,12 @@ class _PlantScreenState extends State<PlantScreen> {
     );
   }
 
-  Widget _buildCareItem(IconData icon, String title, String value, Color iconColor) {
+  Widget _buildCareItem(
+    IconData icon,
+    String title,
+    String value,
+    Color iconColor,
+  ) {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -437,11 +449,7 @@ class _PlantScreenState extends State<PlantScreen> {
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            color: iconColor,
-            size: 24,
-          ),
+          Icon(icon, color: iconColor, size: 24),
           SizedBox(height: 8),
           Text(
             title,
@@ -452,13 +460,7 @@ class _PlantScreenState extends State<PlantScreen> {
             ),
           ),
           SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey[500],
-            ),
-          ),
+          Text(value, style: TextStyle(fontSize: 10, color: Colors.grey[500])),
         ],
       ),
     );

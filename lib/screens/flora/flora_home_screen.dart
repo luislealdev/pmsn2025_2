@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:pmsn2025_2/firebase/plants_firebase.dart';
 import 'package:pmsn2025_2/screens/flora/add_plant_screen.dart';
@@ -13,16 +14,14 @@ class FloraHomeScreen extends StatefulWidget {
 }
 
 class _FloraHomeScreenState extends State<FloraHomeScreen> {
-
   PlantsFirebase plantsFirebase = PlantsFirebase();
 
-
   // Image, name, price
-  final List<Map<String, String>> plants = [
-    {'image': 'assets/flora/plant1.png', 'name': 'Plant 1', 'price': '\$10'},
-    {'image': 'assets/flora/plant2.png', 'name': 'Plant 2', 'price': '\$12'},
-    {'image': 'assets/flora/plant3.png', 'name': 'Plant 3', 'price': '\$15'},
-  ];
+  // final List<Map<String, String>> plants = [
+  //   {'image': 'assets/flora/plant1.png', 'name': 'Plant 1', 'price': '\$10'},
+  //   {'image': 'assets/flora/plant2.png', 'name': 'Plant 2', 'price': '\$12'},
+  //   {'image': 'assets/flora/plant3.png', 'name': 'Plant 3', 'price': '\$15'},
+  // ];
 
   @override
   Widget build(BuildContext context) {
@@ -174,50 +173,72 @@ class _FloraHomeScreenState extends State<FloraHomeScreen> {
             ),
             SizedBox(
               height: 160, // Define una altura específica
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                children: <Widget>[
-                  ...plants.map(
-                    (plant) => GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PlantScreen(plant: plant),
-                          ),
+              child: StreamBuilder(
+                stream: plantsFirebase.selectAllPlants(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    if (snapshot.data!.docs.isEmpty) {
+                      return Text("No se encontró información");
+                    }
+                    return ListView.builder(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        final plant = snapshot.data!.docs[index];
+                        return PlantCard(
+                          plant: plant.data() as Map<String, dynamic>,
                         );
                       },
-                      child: Container(
-                        width: 150,
-                        alignment: Alignment.centerLeft,
-                        margin: EdgeInsets.only(right: 28),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: const Color.fromARGB(156, 131, 214, 24),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Center(
-                              child: Image.asset(
-                                plant['image']!,
-                                height: 120,
-                                width: 120,
-                              ),
-                            ),
-                            Text(
-                              plant['name']!,
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            Text(plant['price']!, textAlign: TextAlign.left),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                    );
+                  } else {
+                    return Text("No se encontró información");
+                  }
+                },
               ),
+              // child: ListView(
+
+              //   children: <Widget>[
+              //     ...plants.map(
+              //       (plant) => GestureDetector(
+              //         onTap: () {
+              //           Navigator.push(
+              //             context,
+              //             MaterialPageRoute(
+              //               builder: (context) => PlantScreen(plant: plant),
+              //             ),
+              //           );
+              //         },
+              //         child: Container(
+              //           width: 150,
+              //           alignment: Alignment.centerLeft,
+              //           margin: EdgeInsets.only(right: 28),
+              //           decoration: BoxDecoration(
+              //             borderRadius: BorderRadius.circular(20),
+              //             color: const Color.fromARGB(156, 131, 214, 24),
+              //           ),
+              //           child: Column(
+              //             mainAxisAlignment: MainAxisAlignment.start,
+              //             children: [
+              //               Center(
+              //                 child: Image.asset(
+              //                   plant['image']!,
+              //                   height: 120,
+              //                   width: 120,
+              //                 ),
+              //               ),
+              //               Text(
+              //                 plant['name']!,
+              //                 style: TextStyle(fontWeight: FontWeight.bold),
+              //               ),
+              //               Text(plant['price']!, textAlign: TextAlign.left),
+              //             ],
+              //           ),
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
             ),
             Padding(
               padding: const EdgeInsets.all(20.0),
@@ -228,72 +249,72 @@ class _FloraHomeScreenState extends State<FloraHomeScreen> {
               ),
             ),
 
-            GridView.builder(
-              shrinkWrap: true,
-              physics:
-                  NeverScrollableScrollPhysics(), // Esto permite que el SingleChildScrollView maneje el scroll
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 30,
-                crossAxisSpacing: 20,
-                childAspectRatio: 0.8,
-              ),
-              itemCount:
-                  plants.length *
-                  2, // Mostrar cada planta dos veces (6 items total)
-              itemBuilder: (context, index) {
-                final plant = plants[index % plants.length];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PlantScreen(plant: plant),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      // borderRadius: BorderRadius.circular(12),
-                      color: Colors.grey[100],
-                      // border: Border.all(color: Colors.grey[300]!, width: 1),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Image.asset(
-                              plant['image']!,
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 1,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 4.0),
-                            child: Text(
-                              plant['name']!,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+            // GridView.builder(
+            //   shrinkWrap: true,
+            //   physics:
+            //       NeverScrollableScrollPhysics(), // Esto permite que el SingleChildScrollView maneje el scroll
+            //   padding: EdgeInsets.symmetric(horizontal: 20),
+            //   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            //     crossAxisCount: 3,
+            //     mainAxisSpacing: 30,
+            //     crossAxisSpacing: 20,
+            //     childAspectRatio: 0.8,
+            //   ),
+            //   itemCount:
+            //       plants.length *
+            //       2, // Mostrar cada planta dos veces (6 items total)
+            //   itemBuilder: (context, index) {
+            //     final plant = plants[index % plants.length];
+            //     return GestureDetector(
+            //       onTap: () {
+            //         Navigator.push(
+            //           context,
+            //           MaterialPageRoute(
+            //             builder: (context) => PlantScreen(plant: plant),
+            //           ),
+            //         );
+            //       },
+            //       child: Container(
+            //         decoration: BoxDecoration(
+            //           // borderRadius: BorderRadius.circular(12),
+            //           color: Colors.grey[100],
+            //           // border: Border.all(color: Colors.grey[300]!, width: 1),
+            //         ),
+            //         child: Column(
+            //           mainAxisAlignment: MainAxisAlignment.center,
+            //           children: [
+            //             Expanded(
+            //               flex: 3,
+            //               child: Padding(
+            //                 padding: EdgeInsets.all(8.0),
+            //                 child: Image.asset(
+            //                   plant['image']!,
+            //                   fit: BoxFit.contain,
+            //                 ),
+            //               ),
+            //             ),
+            //             Expanded(
+            //               flex: 1,
+            //               child: Padding(
+            //                 padding: EdgeInsets.symmetric(horizontal: 4.0),
+            //                 child: Text(
+            //                   plant['name']!,
+            //                   style: TextStyle(
+            //                     fontWeight: FontWeight.bold,
+            //                     fontSize: 12,
+            //                   ),
+            //                   textAlign: TextAlign.center,
+            //                   maxLines: 2,
+            //                   overflow: TextOverflow.ellipsis,
+            //                 ),
+            //               ),
+            //             ),
+            //           ],
+            //         ),
+            //       ),
+            //     );
+            //   },
+            // ),
 
             // Banner promocional
             Padding(
@@ -339,82 +360,118 @@ class _FloraHomeScreenState extends State<FloraHomeScreen> {
               ),
             ),
 
-            // Añadir más contenido para demostrar el scroll
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text(
-                "Popular Plants",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
+            // // Añadir más contenido para demostrar el scroll
+            // Padding(
+            //   padding: const EdgeInsets.all(20.0),
+            //   child: Text(
+            //     "Popular Plants",
+            //     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            //   ),
+            // ),
 
-            // Lista adicional para asegurar que haya scroll
-            Container(
-              height: 200,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                itemCount: plants.length,
-                itemBuilder: (context, index) {
-                  final plant = plants[index];
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PlantScreen(plant: plant),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 150,
-                      margin: EdgeInsets.only(right: 16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            spreadRadius: 1,
-                            blurRadius: 6,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            plant['image']!,
-                            height: 100,
-                            width: 100,
-                            fit: BoxFit.contain,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            plant['name']!,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Text(
-                            plant['price']!,
-                            style: TextStyle(
-                              color: Colors.green[600],
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
+            // // Lista adicional para asegurar que haya scroll
+            // Container(
+            //   height: 200,
+            //   child: ListView.builder(
+            //     scrollDirection: Axis.horizontal,
+            //     padding: EdgeInsets.symmetric(horizontal: 20),
+            //     itemCount: plants.length,
+            //     itemBuilder: (context, index) {
+            //       final plant = plants[index];
+            //       return GestureDetector(
+            //         onTap: () {
+            //           Navigator.push(
+            //             context,
+            //             MaterialPageRoute(
+            //               builder: (context) => PlantScreen(plant: plant),
+            //             ),
+            //           );
+            //         },
+            //         child: Container(
+            //           width: 150,
+            //           margin: EdgeInsets.only(right: 16),
+            //           decoration: BoxDecoration(
+            //             borderRadius: BorderRadius.circular(16),
+            //             color: Colors.white,
+            //             boxShadow: [
+            //               BoxShadow(
+            //                 color: Colors.grey.withOpacity(0.2),
+            //                 spreadRadius: 1,
+            //                 blurRadius: 6,
+            //                 offset: Offset(0, 3),
+            //               ),
+            //             ],
+            //           ),
+            //           child: Column(
+            //             mainAxisAlignment: MainAxisAlignment.center,
+            //             children: [
+            //               Image.asset(
+            //                 plant['image']!,
+            //                 height: 100,
+            //                 width: 100,
+            //                 fit: BoxFit.contain,
+            //               ),
+            //               SizedBox(height: 8),
+            //               Text(
+            //                 plant['name']!,
+            //                 style: TextStyle(
+            //                   fontWeight: FontWeight.bold,
+            //                   fontSize: 14,
+            //                 ),
+            //               ),
+            //               Text(
+            //                 plant['price']!,
+            //                 style: TextStyle(
+            //                   color: Colors.green[600],
+            //                   fontSize: 16,
+            //                   fontWeight: FontWeight.w600,
+            //                 ),
+            //               ),
+            //             ],
+            //           ),
+            //         ),
+            //       );
+            //     },
+            //   ),
+            // ),
             SizedBox(height: 40), // Espacio final para asegurar scroll
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class PlantCard extends StatelessWidget {
+  const PlantCard({super.key, required this.plant});
+
+  final Map<String, dynamic> plant;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(builder: (context) => PlantScreen(plant: plant)),
+        // );
+      },
+      child: Container(
+        width: 150,
+        alignment: Alignment.centerLeft,
+        margin: EdgeInsets.only(right: 28),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: const Color.fromARGB(156, 131, 214, 24),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Center(
+              child: Image.asset(plant['image']!, height: 120, width: 120),
+            ),
+            Text(plant['name']!, style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(plant['price']!.toString(), textAlign: TextAlign.left),
           ],
         ),
       ),
