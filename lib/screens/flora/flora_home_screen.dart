@@ -185,10 +185,13 @@ class _FloraHomeScreenState extends State<FloraHomeScreen> {
                       scrollDirection: Axis.horizontal,
                       itemCount: snapshot.data!.docs.length,
                       itemBuilder: (context, index) {
-                        final plant = snapshot.data!.docs[index];
-                        return PlantCard(
-                          plant: plant.data() as Map<String, dynamic>,
-                        );
+                        final doc = snapshot.data!.docs[index];
+                        final id = snapshot.data!.docs[index].reference.id;
+                        final plant = {
+                          ...(doc.data() as Map<String, dynamic>),
+                          "id": id,
+                        };
+                        return PlantCard(plant: plant);
                       },
                     );
                   } else {
@@ -451,10 +454,10 @@ class PlantCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => PlantScreen(plant: plant)),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => PlantScreen(plant: plant)),
+        );
       },
       child: Container(
         width: 150,

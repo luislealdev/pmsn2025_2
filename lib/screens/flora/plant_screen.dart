@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:pmsn2025_2/firebase/cart_firebase.dart';
+import 'package:pmsn2025_2/firebase/fire_auth.dart';
 
 class PlantScreen extends StatefulWidget {
   final Map<String, dynamic> plant;
@@ -12,6 +15,36 @@ class PlantScreen extends StatefulWidget {
 class _PlantScreenState extends State<PlantScreen> {
   bool isFavorite = false;
   int quantity = 1;
+
+  CartFirebase cartFirebase = CartFirebase();
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _user = _auth.currentUser!;
+  }
+
+  Future<void> _addToCart() async {
+    print('Adding to cart: Plant ID=${widget.plant}, Quantity=$quantity');
+    await cartFirebase.insertCartItem({
+      "user_id": _user!.uid, // Reemplazar con el ID del usuario actual
+      "plant_id": widget.plant['id']!,
+      "quantity": quantity,
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Added to cart'),
+          backgroundColor: Colors.green[600],
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +149,7 @@ class _PlantScreenState extends State<PlantScreen> {
                   child: ClipOval(
                     child: Container(
                       padding: EdgeInsets.all(30),
-                      child: Image.asset(
+                      child: Image.network(
                         widget.plant['image']!,
                         fit: BoxFit.contain,
                       ),
@@ -156,7 +189,7 @@ class _PlantScreenState extends State<PlantScreen> {
                                   ),
                                   SizedBox(height: 8),
                                   Text(
-                                    widget.plant['price']!,
+                                    widget.plant['price']!.toString(),
                                     style: TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.w600,
@@ -220,7 +253,7 @@ class _PlantScreenState extends State<PlantScreen> {
                             ...List.generate(5, (index) {
                               return Icon(
                                 Icons.star,
-                                color: index < 4
+                                color: index < widget.plant['rating']!.toInt()
                                     ? Colors.amber
                                     : Colors.grey[300],
                                 size: 20,
@@ -228,7 +261,7 @@ class _PlantScreenState extends State<PlantScreen> {
                             }),
                             SizedBox(width: 8),
                             Text(
-                              '4.8 (2.3k reviews)',
+                              '${widget.plant['rating']!} (${widget.plant['reviews']!} reviews)',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -250,7 +283,7 @@ class _PlantScreenState extends State<PlantScreen> {
                         ),
                         SizedBox(height: 12),
                         Text(
-                          'Esta hermosa ${widget.plant['name']!.toLowerCase()} es perfecta para decorar cualquier espacio de tu hogar. Con sus hojas vibrantes y fácil cuidado, esta planta aporta vida y frescura a tu ambiente. Ideal tanto para principiantes como para expertos en jardinería.',
+                          '${widget.plant['description']!}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -396,13 +429,14 @@ class _PlantScreenState extends State<PlantScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Processing purchase...'),
-                      backgroundColor: Colors.green[600],
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  // ScaffoldMessenger.of(context).showSnackBar(
+                  //   SnackBar(
+                  //     content: Text('Processing purchase...'),
+                  //     backgroundColor: Colors.green[600],
+                  //     behavior: SnackBarBehavior.floating,
+                  //   ),
+                  // );
+                  _addToCart();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
@@ -418,7 +452,7 @@ class _PlantScreenState extends State<PlantScreen> {
                     Icon(Icons.shopping_bag),
                     SizedBox(width: 8),
                     Text(
-                      'Buy Now',
+                      'Add to cart',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
