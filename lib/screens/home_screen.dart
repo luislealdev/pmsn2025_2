@@ -54,10 +54,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final Color unselectedColor =
-        colors[currentPage].computeLuminance() < 0.5
-            ? Colors.white
-            : Colors.black;
+    final Color unselectedColor = colors[currentPage].computeLuminance() < 0.5
+        ? Colors.white
+        : Colors.black;
 
     // Color más visible para los íconos no seleccionados en el bottom bar
     final Color unselectedIconColor = Colors.grey[600]!;
@@ -97,6 +96,14 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             Divider(),
             ListTile(
+              leading: Icon(Icons.music_note, color: Colors.purple[600]),
+              title: Text('Movies'),
+              subtitle: Text('Movies desde api'),
+              trailing: Icon(Icons.chevron_right),
+              onTap: () => Navigator.pushNamed(context, "/api-movies"),
+            ),
+            Divider(),
+            ListTile(
               leading: Icon(Icons.nature, color: Colors.green[700]),
               title: Text('Flora App'),
               subtitle: Text('Tienda de plantas'),
@@ -117,17 +124,17 @@ class _HomeScreenState extends State<HomeScreen>
             builder: (context, value, _) {
               return value
                   ? IconButton(
-                    icon: Icon(Icons.wb_sunny),
-                    onPressed: () {
-                      ValueListener.isDark.value = false;
-                    },
-                  )
+                      icon: Icon(Icons.wb_sunny),
+                      onPressed: () {
+                        ValueListener.isDark.value = false;
+                      },
+                    )
                   : IconButton(
-                    icon: Icon(Icons.nightlight),
-                    onPressed: () {
-                      ValueListener.isDark.value = true;
-                    },
-                  );
+                      icon: Icon(Icons.nightlight),
+                      onPressed: () {
+                        ValueListener.isDark.value = true;
+                      },
+                    );
             },
           ),
         ],
@@ -135,27 +142,25 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       body: BottomBar(
         fit: StackFit.expand,
-        icon:
-            (width, height) => Center(
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                onPressed: null,
-                icon: Icon(
-                  Icons.arrow_upward_rounded,
-                  color: unselectedColor,
-                  size: width,
-                ),
-              ),
+        icon: (width, height) => Center(
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            onPressed: null,
+            icon: Icon(
+              Icons.arrow_upward_rounded,
+              color: unselectedColor,
+              size: width,
             ),
+          ),
+        ),
         borderRadius: BorderRadius.circular(500),
         duration: Duration(seconds: 1),
         curve: Curves.decelerate,
         showIcon: true,
         width: MediaQuery.of(context).size.width * 0.8,
-        barColor:
-            colors[currentPage].computeLuminance() > 0.5
-                ? Colors.black
-                : Colors.white,
+        barColor: colors[currentPage].computeLuminance() > 0.5
+            ? Colors.black
+            : Colors.white,
         start: 2,
         end: 0,
         offset: 10,
@@ -168,28 +173,20 @@ class _HomeScreenState extends State<HomeScreen>
         respectSafeArea: true,
         onBottomBarHidden: () {},
         onBottomBarShown: () {},
-        body:
-            (context, controller) => TabBarView(
-              controller: tabController,
-              dragStartBehavior: DragStartBehavior.down,
-              physics: const BouncingScrollPhysics(),
-              children: [
-                _buildPageContent(controller, 0, "Inicio", Icons.home),
-                _buildPageContent(controller, 1, "Buscar", Icons.search),
-                _buildIoTDevicesPage(
-                  controller,
-                ), // Página IoT para dispositivos del hogar
-                _buildFavoritesPage(
-                  controller,
-                ), // Página especial para Favoritos
-                _buildPageContent(
-                  controller,
-                  4,
-                  "Configuración",
-                  Icons.settings,
-                ),
-              ],
-            ),
+        body: (context, controller) => TabBarView(
+          controller: tabController,
+          dragStartBehavior: DragStartBehavior.down,
+          physics: const BouncingScrollPhysics(),
+          children: [
+            _buildPageContent(controller, 0, "Inicio", Icons.home),
+            _buildPageContent(controller, 1, "Buscar", Icons.search),
+            _buildIoTDevicesPage(
+              controller,
+            ), // Página IoT para dispositivos del hogar
+            _buildFavoritesPage(controller), // Página especial para Favoritos
+            _buildPageContent(controller, 4, "Configuración", Icons.settings),
+          ],
+        ),
         child: TabBar(
           indicatorPadding: const EdgeInsets.fromLTRB(6, 0, 6, 0),
           controller: tabController,
@@ -263,18 +260,17 @@ class _HomeScreenState extends State<HomeScreen>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors:
-              isDarkMode
-                  ? [
-                    colors[2].withOpacity(0.2),
-                    colors[2].withOpacity(0.1),
-                    Colors.grey[900]!.withOpacity(0.8),
-                  ]
-                  : [
-                    colors[2].withOpacity(0.3),
-                    colors[2].withOpacity(0.1),
-                    Colors.white.withOpacity(0.05),
-                  ],
+          colors: isDarkMode
+              ? [
+                  colors[2].withOpacity(0.2),
+                  colors[2].withOpacity(0.1),
+                  Colors.grey[900]!.withOpacity(0.8),
+                ]
+              : [
+                  colors[2].withOpacity(0.3),
+                  colors[2].withOpacity(0.1),
+                  Colors.white.withOpacity(0.05),
+                ],
           stops: [0.0, 0.6, 1.0],
         ),
       ),
@@ -325,14 +321,13 @@ class _HomeScreenState extends State<HomeScreen>
                     icon: Icons.thermostat,
                     color: Colors.orange,
                     isActive: true,
-                    onDetailsPressed:
-                        () => _navigateToDeviceDetails(
-                          'Termostato Inteligente',
-                          'Sistema de Climatización',
-                          Icons.thermostat,
-                          Colors.orange,
-                          '24°C',
-                        ),
+                    onDetailsPressed: () => _navigateToDeviceDetails(
+                      'Termostato Inteligente',
+                      'Sistema de Climatización',
+                      Icons.thermostat,
+                      Colors.orange,
+                      '24°C',
+                    ),
                   ),
 
                   SizedBox(height: 20),
@@ -346,14 +341,13 @@ class _HomeScreenState extends State<HomeScreen>
                     icon: Icons.lightbulb,
                     color: Colors.amber,
                     isActive: true,
-                    onDetailsPressed:
-                        () => _navigateToDeviceDetails(
-                          'Sistema de Iluminación',
-                          'Control de Luces Inteligentes',
-                          Icons.lightbulb,
-                          Colors.amber,
-                          '85% Intensidad',
-                        ),
+                    onDetailsPressed: () => _navigateToDeviceDetails(
+                      'Sistema de Iluminación',
+                      'Control de Luces Inteligentes',
+                      Icons.lightbulb,
+                      Colors.amber,
+                      '85% Intensidad',
+                    ),
                   ),
 
                   SizedBox(height: 20),
@@ -367,14 +361,13 @@ class _HomeScreenState extends State<HomeScreen>
                     icon: Icons.security,
                     color: Colors.red,
                     isActive: true,
-                    onDetailsPressed:
-                        () => _navigateToDeviceDetails(
-                          'Sistema de Seguridad',
-                          'Alarma y Cámaras de Seguridad',
-                          Icons.security,
-                          Colors.red,
-                          'Estado Activo',
-                        ),
+                    onDetailsPressed: () => _navigateToDeviceDetails(
+                      'Sistema de Seguridad',
+                      'Alarma y Cámaras de Seguridad',
+                      Icons.security,
+                      Colors.red,
+                      'Estado Activo',
+                    ),
                   ),
                 ],
               ),
@@ -403,10 +396,9 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Transform(
       alignment: FractionalOffset.center,
-      transform:
-          Matrix4.identity()
-            ..setEntry(3, 2, 0.01)
-            ..rotateY(2 * pi / 180),
+      transform: Matrix4.identity()
+        ..setEntry(3, 2, 0.01)
+        ..rotateY(2 * pi / 180),
       child: Container(
         height: 180,
         margin: EdgeInsets.symmetric(vertical: 8),
@@ -414,18 +406,17 @@ class _HomeScreenState extends State<HomeScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors:
-                isDarkMode
-                    ? [
-                      color.withOpacity(0.2),
-                      color.withOpacity(0.1),
-                      Colors.grey[800]!.withOpacity(0.3),
-                    ]
-                    : [
-                      color.withOpacity(0.1),
-                      color.withOpacity(0.05),
-                      Colors.white.withOpacity(0.1),
-                    ],
+            colors: isDarkMode
+                ? [
+                    color.withOpacity(0.2),
+                    color.withOpacity(0.1),
+                    Colors.grey[800]!.withOpacity(0.3),
+                  ]
+                : [
+                    color.withOpacity(0.1),
+                    color.withOpacity(0.05),
+                    Colors.white.withOpacity(0.1),
+                  ],
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: color.withOpacity(0.3), width: 1),
@@ -505,12 +496,12 @@ class _HomeScreenState extends State<HomeScreen>
                           },
                           activeColor: color,
                           activeTrackColor: color.withOpacity(0.3),
-                          inactiveThumbColor:
-                              isDarkMode ? Colors.grey[400] : Colors.grey,
-                          inactiveTrackColor:
-                              isDarkMode
-                                  ? Colors.grey[700]
-                                  : Colors.grey.withOpacity(0.3),
+                          inactiveThumbColor: isDarkMode
+                              ? Colors.grey[400]
+                              : Colors.grey,
+                          inactiveTrackColor: isDarkMode
+                              ? Colors.grey[700]
+                              : Colors.grey.withOpacity(0.3),
                         ),
                         SizedBox(width: 10),
                         ElevatedButton(
@@ -574,14 +565,13 @@ class _HomeScreenState extends State<HomeScreen>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => IoTDeviceDetailsScreen(
-              deviceName: name,
-              deviceType: type,
-              deviceIcon: icon,
-              deviceColor: color,
-              deviceValue: value,
-            ),
+        builder: (context) => IoTDeviceDetailsScreen(
+          deviceName: name,
+          deviceType: type,
+          deviceIcon: icon,
+          deviceColor: color,
+          deviceValue: value,
+        ),
       ),
     );
   }
@@ -615,10 +605,9 @@ class _HomeScreenState extends State<HomeScreen>
                   offset: Offset(-10, 0),
                   child: Transform(
                     alignment: FractionalOffset.center,
-                    transform:
-                        Matrix4.identity()
-                          ..setEntry(3, 2, 0.01)
-                          ..rotateY(1.5 * pi / 180),
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.01)
+                      ..rotateY(1.5 * pi / 180),
                     child: Container(
                       height: 216,
                       margin: EdgeInsets.symmetric(horizontal: 40),
@@ -633,10 +622,9 @@ class _HomeScreenState extends State<HomeScreen>
                   offset: Offset(-44, 0),
                   child: Transform(
                     alignment: FractionalOffset.center,
-                    transform:
-                        Matrix4.identity()
-                          ..setEntry(3, 2, 0.01)
-                          ..rotateY(8 * pi / 180),
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.01)
+                      ..rotateY(8 * pi / 180),
                     child: Container(
                       height: 188,
                       margin: EdgeInsets.symmetric(horizontal: 40),
