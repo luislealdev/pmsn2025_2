@@ -21,7 +21,11 @@ class CartFirebase {
     await cartCollection!.doc(uid).delete();
   }
 
-  Stream<QuerySnapshot> selectAllCartItems() {
+  Stream<QuerySnapshot> selectAllCartItems(String userId) {
+    // Get cart items
+
+
+    // Get items info
     return cartCollection!.snapshots();
   }
 }

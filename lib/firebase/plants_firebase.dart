@@ -24,4 +24,8 @@ class PlantsFirebase {
   Stream<QuerySnapshot> selectAllPlants() {
     return floraCollection!.snapshots();
   }
+
+  Future<DocumentSnapshot> selectPlantById(String uid) {
+    return floraCollection!.doc(uid).get();
+  }
 }

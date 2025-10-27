@@ -1,4 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:pmsn2025_2/firebase/cart_firebase.dart';
+import 'package:pmsn2025_2/firebase/plants_firebase.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -8,37 +12,25 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  // Datos de ejemplo del carrito
-  List<Map<String, dynamic>> cartItems = [
-    {
-      'id': '1',
-      'name': 'Plant 1',
-      'image': 'assets/flora/plant1.png',
-      'price': 10.0,
-      'quantity': 2,
-    },
-    {
-      'id': '2',
-      'name': 'Plant 2',
-      'image': 'assets/flora/plant2.png',
-      'price': 12.0,
-      'quantity': 1,
-    },
-    {
-      'id': '3',
-      'name': 'Plant 3',
-      'image': 'assets/flora/plant3.png',
-      'price': 15.0,
-      'quantity': 3,
-    },
-  ];
+  CartFirebase cartFirebase = CartFirebase();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  PlantsFirebase plantsFirebase = PlantsFirebase();
+  User? _user;
+  double totalAmount = 0.0;
+  int totalItems = 0;
 
-  double get totalAmount {
-    return cartItems.fold(0.0, (sum, item) => sum + (item['price'] * item['quantity']));
-  }
+  // double get totalAmount {
+  //   return cartItems.fold(0.0, (sum, item) => sum + (item['price'] * item['quantity']));
+  // }
 
-  int get totalItems {
-    return cartItems.fold(0, (sum, item) => sum + item['quantity'] as int);
+  // int get totalItems {
+  //   return cartItems.fold(0, (sum, item) => sum + item['quantity'] as int);
+  // }
+
+  @override
+  void initState() {
+    super.initState();
+    _user = _auth.currentUser!;
   }
 
   @override
@@ -64,41 +56,121 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          cartItems.isNotEmpty
-              ? TextButton(
-                  onPressed: () => _showClearCartDialog(),
-                  child: Text(
-                    "Clear",
-                    style: TextStyle(
-                      color: Colors.red[600],
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )
-              : SizedBox.shrink(),
+        // actions: [
+        //   cartItems.isNotEmpty
+        //       ? TextButton(
+        //           onPressed: () => _showClearCartDialog(),
+        //           child: Text(
+        //             "Clear",
+        //             style: TextStyle(
+        //               color: Colors.red[600],
+        //               fontWeight: FontWeight.w600,
+        //             ),
+        //           ),
+        //         )
+        //       : SizedBox.shrink(),
+        // ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder(
+              stream: cartFirebase.selectAllCartItems(_user!.uid),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  if (snapshot.data!.docs.isEmpty) {
+                    return _buildEmptyCart();
+                  }
+
+                  final cartItems = snapshot.data!.docs;
+
+                  totalItems = cartItems.fold(
+                    0,
+                    (sum, item) => sum + item['quantity'] as int,
+                  );
+
+                  return ListView.builder(
+                    padding: EdgeInsets.all(16),
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      final cartDoc = cartItems[index];
+                      final cartData = cartDoc.data() as Map<String, dynamic>;
+                      final String plantId = cartData['plant_id'];
+                      final int quantity = cartData['quantity'];
+
+                      // final item =
+                      //     snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                      return FutureBuilder<DocumentSnapshot>(
+                        future: plantsFirebase.selectPlantById(plantId),
+                        builder: (context, plantSnapshot) {
+                          if (plantSnapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return ListTile(
+                              leading: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                              title: Text('Cargando...'),
+                            );
+                          }
+
+                          if (!plantSnapshot.hasData ||
+                              !plantSnapshot.data!.exists) {
+                            return ListTile(
+                              title: Text('Planta no encontrada'),
+                              subtitle: Text('ID: $plantId'),
+                            );
+                          }
+
+                          final plantData =
+                              plantSnapshot.data!.data()
+                                  as Map<String, dynamic>;
+
+                          final double price = plantData['price'];
+                          totalAmount += price * quantity;
+
+                          return _buildCartItem({
+                            'name': plantData['name'],
+                            'image': plantData['image'],
+                            'price': plantData['price'],
+                            'quantity': quantity,
+                          }, index);
+                        },
+                      );
+                    },
+                  );
+                } else {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                }
+              },
+            ),
+          ),
+          _buildCartSummary(),
         ],
       ),
-      body: cartItems.isEmpty
-          ? _buildEmptyCart()
-          : Column(
-              children: [
-                // Lista de productos en el carrito
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.all(16),
-                    itemCount: cartItems.length,
-                    itemBuilder: (context, index) {
-                      final item = cartItems[index];
-                      return _buildCartItem(item, index);
-                    },
-                  ),
-                ),
-                
-                // Resumen y botón de checkout
-                _buildCartSummary(),
-              ],
-            ),
+      // body: cartItems.isEmpty
+      //     ? _buildEmptyCart()
+      //     : Column(
+      //         children: [
+      //           // Lista de productos en el carrito
+      //           Expanded(
+      //             child: ListView.builder(
+      //               padding: EdgeInsets.all(16),
+      //               itemCount: cartItems.length,
+      //               itemBuilder: (context, index) {
+      //                 final item = cartItems[index];
+      //                 return _buildCartItem(item, index);
+      //               },
+      //             ),
+      //           ),
+
+      //           // Resumen y botón de checkout
+      //           _buildCartSummary(),
+      //         ],
+      //       ),
     );
   }
 
@@ -131,10 +203,7 @@ class _CartScreenState extends State<CartScreen> {
           SizedBox(height: 8),
           Text(
             "Add some plants to get started!",
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
           ),
           SizedBox(height: 32),
           ElevatedButton(
@@ -149,10 +218,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
             child: Text(
               "Continue Shopping",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -188,7 +254,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
+              child: Image.network(
                 item['image'],
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
@@ -205,7 +271,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ),
           SizedBox(width: 16),
-          
+
           // Información del producto
           Expanded(
             child: Column(
@@ -229,7 +295,7 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ),
                 SizedBox(height: 8),
-                
+
                 // Controles de cantidad
                 Row(
                   children: [
@@ -250,7 +316,10 @@ class _CartScreenState extends State<CartScreen> {
                               });
                             },
                             icon: Icon(Icons.remove, size: 16),
-                            constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+                            constraints: BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
                             padding: EdgeInsets.zero,
                           ),
                           Container(
@@ -270,7 +339,10 @@ class _CartScreenState extends State<CartScreen> {
                               });
                             },
                             icon: Icon(Icons.add, size: 16),
-                            constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+                            constraints: BoxConstraints(
+                              minWidth: 32,
+                              minHeight: 32,
+                            ),
                             padding: EdgeInsets.zero,
                           ),
                         ],
@@ -290,14 +362,11 @@ class _CartScreenState extends State<CartScreen> {
               ],
             ),
           ),
-          
+
           // Botón eliminar
           IconButton(
             onPressed: () => _showRemoveItemDialog(item, index),
-            icon: Icon(
-              Icons.delete_outline,
-              color: Colors.red[400],
-            ),
+            icon: Icon(Icons.delete_outline, color: Colors.red[400]),
           ),
         ],
       ),
@@ -326,17 +395,11 @@ class _CartScreenState extends State<CartScreen> {
             children: [
               Text(
                 "Items ($totalItems)",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
               Text(
                 "\$${totalAmount.toStringAsFixed(2)}",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -346,10 +409,7 @@ class _CartScreenState extends State<CartScreen> {
             children: [
               Text(
                 "Delivery",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
               ),
               Text(
                 "Free",
@@ -384,7 +444,7 @@ class _CartScreenState extends State<CartScreen> {
             ],
           ),
           SizedBox(height: 20),
-          
+
           // Botón de checkout
           SizedBox(
             width: double.infinity,
@@ -405,10 +465,7 @@ class _CartScreenState extends State<CartScreen> {
                   SizedBox(width: 8),
                   Text(
                     "Proceed to Checkout",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -424,7 +481,9 @@ class _CartScreenState extends State<CartScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Remove Item"),
-        content: Text("Are you sure you want to remove ${item['name']} from your cart?"),
+        content: Text(
+          "Are you sure you want to remove ${item['name']} from your cart?",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -432,9 +491,9 @@ class _CartScreenState extends State<CartScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              setState(() {
-                cartItems.removeAt(index);
-              });
+              // setState(() {
+              //   cartItems.removeAt(index);
+              // });
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -444,9 +503,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[600],
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red[600]),
             child: Text("Remove"),
           ),
         ],
@@ -459,7 +516,9 @@ class _CartScreenState extends State<CartScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text("Clear Cart"),
-        content: Text("Are you sure you want to remove all items from your cart?"),
+        content: Text(
+          "Are you sure you want to remove all items from your cart?",
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -468,7 +527,7 @@ class _CartScreenState extends State<CartScreen> {
           ElevatedButton(
             onPressed: () {
               setState(() {
-                cartItems.clear();
+                // cartItems.clear();
               });
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -479,9 +538,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red[600],
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red[600]),
             child: Text("Clear All"),
           ),
         ],
@@ -500,10 +557,12 @@ class _CartScreenState extends State<CartScreen> {
           children: [
             Text("Order Summary:"),
             SizedBox(height: 8),
-            Text("Items: $totalItems"),
-            Text("Total: \$${totalAmount.toStringAsFixed(2)}"),
+            // Text("Items: $totalItems"),
+            // Text("Total: \$${totalAmount.toStringAsFixed(2)}"),
             SizedBox(height: 16),
-            Text("Your order will be processed and delivered within 2-3 business days."),
+            Text(
+              "Your order will be processed and delivered within 2-3 business days.",
+            ),
           ],
         ),
         actions: [
@@ -514,7 +573,7 @@ class _CartScreenState extends State<CartScreen> {
           ElevatedButton(
             onPressed: () {
               setState(() {
-                cartItems.clear();
+                // cartItems.clear();
               });
               Navigator.pop(context);
               Navigator.pop(context); // Volver al home
@@ -527,9 +586,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green[600],
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green[600]),
             child: Text("Place Order"),
           ),
         ],
