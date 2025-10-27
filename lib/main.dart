@@ -7,13 +7,13 @@ import 'package:pmsn2025_2/screens/flora/flora_home_screen.dart';
 import 'package:pmsn2025_2/screens/home_screen.dart';
 import 'package:pmsn2025_2/screens/login_screen.dart';
 import 'package:pmsn2025_2/screens/movies/add_movie_screen.dart';
+import 'package:pmsn2025_2/screens/movies/api/list_api_movies.dart';
 import 'package:pmsn2025_2/screens/movies/list_movies_screen.dart';
 import 'package:pmsn2025_2/screens/register_screen.dart';
 import 'package:pmsn2025_2/screens/songs/add_song_screen.dart';
 import 'package:pmsn2025_2/screens/songs/list_songs_screen.dart';
 import 'package:pmsn2025_2/utils/theme_app.dart';
 import 'package:pmsn2025_2/utils/value_listener.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +49,7 @@ class _MyAppState extends State<MyApp> {
             "/listdb": (context) => const ListMoviesScreen(),
             "/songs": (context) => const ListSongsScreen(),
             "/add-song": (context) => const AddSongScreen(),
+            "/api-movies": (context) => const ListApiMovies(),
           },
           debugShowCheckedModeBanner: false,
           home: const LoginScreen(),
