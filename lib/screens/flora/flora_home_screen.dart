@@ -468,7 +468,7 @@ class PlantCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Center(
-              child: Image.asset(plant['image']!, height: 120, width: 120),
+              child: Image.network(plant['image']!, height: 120, width: 120),
             ),
             Text(plant['name']!, style: TextStyle(fontWeight: FontWeight.bold)),
             Text(plant['price']!.toString(), textAlign: TextAlign.left),
