@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pmsn2025_2/firebase/cart_firebase.dart';
 import 'package:pmsn2025_2/firebase/plants_firebase.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -147,6 +148,14 @@ class _CartScreenState extends State<CartScreen> {
                 }
               },
             ),
+          ),
+          Text(
+            "Calendario de riego (Fecha estimada desde fecha de agregado al carrito)",
+          ),
+          TableCalendar(
+            firstDay: DateTime.utc(2010, 10, 16),
+            lastDay: DateTime.utc(2030, 3, 14),
+            focusedDay: DateTime.now(),
           ),
           _buildCartSummary(),
         ],

@@ -28,11 +28,11 @@ class _PlantScreenState extends State<PlantScreen> {
   }
 
   Future<void> _addToCart() async {
-    print('Adding to cart: Plant ID=${widget.plant}, Quantity=$quantity');
     await cartFirebase.insertCartItem({
       "user_id": _user!.uid, // Reemplazar con el ID del usuario actual
       "plant_id": widget.plant['id']!,
       "quantity": quantity,
+      "created_at": DateTime.now(),
     });
 
     if (mounted) {
