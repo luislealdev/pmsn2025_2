@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pmsn2025_2/firebase/cart_firebase.dart';
 import 'package:pmsn2025_2/firebase/plants_firebase.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:pmsn2025_2/screens/flora/plant_calendar_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -95,6 +96,7 @@ class _CartScreenState extends State<CartScreen> {
                     itemCount: snapshot.data!.docs.length,
                     itemBuilder: (context, index) {
                       final cartDoc = cartItems[index];
+                      final cartId = cartDoc.id;
                       final cartData = cartDoc.data() as Map<String, dynamic>;
                       final String plantId = cartData['plant_id'];
                       final int quantity = cartData['quantity'];
@@ -126,15 +128,25 @@ class _CartScreenState extends State<CartScreen> {
                               plantSnapshot.data!.data()
                                   as Map<String, dynamic>;
 
-                          final double price = plantData['price'];
+                          final double price = (plantData['price'] is int)
+                              ? (plantData['price'] as int).toDouble()
+                              : (plantData['price'] as double);
                           totalAmount += price * quantity;
 
-                          return _buildCartItem({
+                          // Merge cart metadata (created_at, watering_interval_days etc.) so calendar can use it
+                          final merged = {
+                            'cart_id': cartId,
                             'name': plantData['name'],
                             'image': plantData['image'],
-                            'price': plantData['price'],
+                            'price': price,
                             'quantity': quantity,
-                          }, index);
+                            'created_at': cartData['created_at'],
+                            'watering_interval_days':
+                                cartData['watering_interval_days'],
+                            'last_watered': cartData['last_watered'],
+                          };
+
+                          return _buildCartItem(merged, index);
                         },
                       );
                     },
@@ -149,14 +161,14 @@ class _CartScreenState extends State<CartScreen> {
               },
             ),
           ),
-          Text(
-            "Calendario de riego (Fecha estimada desde fecha de agregado al carrito)",
-          ),
-          TableCalendar(
-            firstDay: DateTime.utc(2010, 10, 16),
-            lastDay: DateTime.utc(2030, 3, 14),
-            focusedDay: DateTime.now(),
-          ),
+          // Text(
+          //   "Calendario de riego (Fecha estimada desde fecha de agregado al carrito)",
+          // ),
+          // TableCalendar(
+          //   firstDay: DateTime.utc(2010, 10, 16),
+          //   lastDay: DateTime.utc(2030, 3, 14),
+          //   focusedDay: DateTime.now(),
+          // ),
           _buildCartSummary(),
         ],
       ),
@@ -373,9 +385,37 @@ class _CartScreenState extends State<CartScreen> {
           ),
 
           // Botón eliminar
-          IconButton(
-            onPressed: () => _showRemoveItemDialog(item, index),
-            icon: Icon(Icons.delete_outline, color: Colors.red[400]),
+          Column(
+            children: [
+              IconButton(
+                onPressed: () => _showRemoveItemDialog(item, index),
+                icon: Icon(Icons.delete_outline, color: Colors.red[400]),
+              ),
+              IconButton(
+                onPressed: () {
+                  // Abrir calendario para este item
+                  final cartId = item['cart_id'] as String?;
+                  if (cartId != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PlantCalendarScreen(cartItemId: cartId),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Calendar not available for this item'),
+                      ),
+                    );
+                  }
+                },
+                icon: Icon(
+                  Icons.calendar_today_outlined,
+                  color: Colors.green[700],
+                ),
+              ),
+            ],
           ),
         ],
       ),

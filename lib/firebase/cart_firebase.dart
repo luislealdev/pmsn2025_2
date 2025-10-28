@@ -22,10 +22,11 @@ class CartFirebase {
   }
 
   Stream<QuerySnapshot> selectAllCartItems(String userId) {
-    // Get cart items
+    // Return only cart items that belong to the given user
+    return cartCollection!.where('user_id', isEqualTo: userId).snapshots();
+  }
 
-
-    // Get items info
-    return cartCollection!.snapshots();
+  Future<DocumentSnapshot> selectCartItemById(String uid) async {
+    return await cartCollection!.doc(uid).get();
   }
 }

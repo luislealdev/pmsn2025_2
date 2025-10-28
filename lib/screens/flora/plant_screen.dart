@@ -1,7 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pmsn2025_2/firebase/cart_firebase.dart';
-import 'package:pmsn2025_2/firebase/fire_auth.dart';
+// ...existing code...
 
 class PlantScreen extends StatefulWidget {
   final Map<String, dynamic> plant;
@@ -32,7 +33,13 @@ class _PlantScreenState extends State<PlantScreen> {
       "user_id": _user!.uid, // Reemplazar con el ID del usuario actual
       "plant_id": widget.plant['id']!,
       "quantity": quantity,
-      "created_at": DateTime.now(),
+      // Use Firestore Timestamp so other code expects Timestamp
+      "created_at": Timestamp.fromDate(DateTime.now()),
+      // default watering interval (days). You can change this to ask the user.
+      "watering_interval_days": 7,
+      // store some plant meta to simplify calendar display
+      "plant_name": widget.plant['name'],
+      "category": widget.plant['category'] ?? widget.plant['type'] ?? '',
     });
 
     if (mounted) {
