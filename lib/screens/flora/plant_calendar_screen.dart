@@ -16,6 +16,12 @@ class _PlantCalendarScreenState extends State<PlantCalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   Map<String, dynamic>? _cartData;
+  // Mostrar u ocultar días de riego en el calendario
+  bool _showWateringDays = true;
+  // Lista calculada de próximas fechas de riego
+  List<DateTime> _wateringDates = [];
+  // Fechas que ya han sido registradas como regadas
+  Set<DateTime> _wateredDates = {};
 
   DateTime _stripTime(DateTime d) => DateTime(d.year, d.month, d.day);
 
@@ -48,10 +54,25 @@ class _PlantCalendarScreenState extends State<PlantCalendarScreen> {
 
     // generar proximos riegos (ej: 12 ocurrencias)
     var current = _stripTime(base);
+    _wateringDates = [];
     for (int i = 0; i < 12; i++) {
       events.putIfAbsent(current, () => []);
       events[current]!.add('Regar');
+      _wateringDates.add(current);
       current = current.add(Duration(days: interval));
+    }
+
+    // Procesar historial de riego si existe
+    _wateredDates = {};
+    if (data['watering_history'] != null && data['watering_history'] is List) {
+      for (var entry in data['watering_history']) {
+        try {
+          if (entry is Map && entry['date'] is Timestamp) {
+            final dt = (entry['date'] as Timestamp).toDate();
+            _wateredDates.add(_stripTime(dt));
+          }
+        } catch (_) {}
+      }
     }
 
     setState(() {
@@ -60,7 +81,88 @@ class _PlantCalendarScreenState extends State<PlantCalendarScreen> {
   }
 
   List<String> _getEventsForDay(DateTime day) {
-    return _events[_stripTime(day)] ?? [];
+    final key = _stripTime(day);
+    final all = _events[key] ?? [];
+    if (!_showWateringDays) {
+      // Filtrar eventos Regar si el usuario no quiere verlos
+      return all.where((e) => e != 'Regar').toList();
+    }
+    return all;
+  }
+
+  // helper removed: using _wateringDates and _wateredDates directly
+
+  int _countWateredInMonth(DateTime month) {
+    int count = 0;
+    for (var d in _wateringDates) {
+      if (d.year == month.year && d.month == month.month) {
+        if (_wateredDates.contains(_stripTime(d))) count++;
+      }
+    }
+    return count;
+  }
+
+  int _countPendingInMonth(DateTime month) {
+    int count = 0;
+    for (var d in _wateringDates) {
+      if (d.year == month.year && d.month == month.month) {
+        if (!_wateredDates.contains(_stripTime(d))) count++;
+      }
+    }
+    return count;
+  }
+
+  void _showMonthDetails(DateTime month, bool showWatered) {
+    final dates = _wateringDates.where((d) => d.year == month.year && d.month == month.month).toList();
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                showWatered ? 'Días regados' : 'Días por regar',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              if (dates.isEmpty) Text('No hay registros para este mes') else ...[
+                SizedBox(
+                  height: 300,
+                  child: ListView.separated(
+                    itemCount: dates.length,
+                    separatorBuilder: (_, __) => Divider(),
+                    itemBuilder: (context, idx) {
+                      final d = dates[idx];
+                      final watered = _wateredDates.contains(_stripTime(d));
+                      if (showWatered && !watered) return SizedBox.shrink();
+                      if (!showWatered && watered) return SizedBox.shrink();
+                      return ListTile(
+                        leading: Icon(watered ? Icons.check_circle : Icons.water_drop, color: watered ? Colors.green : Colors.blue),
+                        title: Text('${d.toLocal().toIso8601String().split('T').first}'),
+                        subtitle: Text(watered ? 'Regado' : 'Pendiente'),
+                        trailing: !watered
+                            ? ElevatedButton(
+                                onPressed: () async {
+                                  await _markAsWatered(d);
+                                  Navigator.of(ctx).pop();
+                                },
+                                child: Text('Marcar como regado'),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.green[600]),
+                              )
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _markAsWatered(DateTime day) async {
@@ -92,6 +194,43 @@ class _PlantCalendarScreenState extends State<PlantCalendarScreen> {
       ),
       body: Column(
         children: [
+          // Toggle para mostrar/ocultar días de riego
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Text('Mostrar días de riego', style: TextStyle(fontWeight: FontWeight.w600)),
+                    SizedBox(width: 8),
+                    Switch(
+                      value: _showWateringDays,
+                      activeColor: Colors.green[600],
+                      onChanged: (v) => setState(() => _showWateringDays = v),
+                    ),
+                  ],
+                ),
+                // Chips resumen
+                Row(
+                  children: [
+                    ActionChip(
+                      label: Text('Regados: ${_countWateredInMonth(_focusedDay)}'),
+                      onPressed: () => _showMonthDetails(_focusedDay, true),
+                      backgroundColor: Colors.green[50],
+                    ),
+                    SizedBox(width: 8),
+                    ActionChip(
+                      label: Text('Faltan: ${_countPendingInMonth(_focusedDay)}'),
+                      onPressed: () => _showMonthDetails(_focusedDay, false),
+                      backgroundColor: Colors.orange[50],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
           TableCalendar(
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2100, 12, 31),
