@@ -20,15 +20,31 @@ class _ListApiMoviesState extends State<ListApiMovies> {
         future: apiMovies!.getMovies(),
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return GridView.builder(
-              itemCount: snapshot.data!.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-              ),
-              itemBuilder: (context, index) {
-                return ItemApiMovie(apiMovieDao: snapshot.data![index]);
-              },
+            return CustomScrollView(
+              slivers: [
+                SliverGrid.builder(
+                  itemCount: snapshot.data!.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.7,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemBuilder: (context, index) {
+                    return ItemApiMovie(apiMovieDao: snapshot.data![index]);
+                  },
+                ),
+              ],
             );
+
+            // GridView.builder(
+            //   itemCount: snapshot.data!.length,
+            //   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            //     crossAxisCount: 2,
+            //   ),
+            //   itemBuilder: (context, index) {
+            //     return ItemApiMovie(apiMovieDao: snapshot.data![index]);
+            //   },
+            // );
           } else {
             if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
