@@ -1,8 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:pmsn2025_2/firebase/cart_firebase.dart';
-// ...existing code...
 
 class PlantScreen extends StatefulWidget {
   final Map<String, dynamic> plant;
@@ -55,6 +55,9 @@ class _PlantScreenState extends State<PlantScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final imageUrl = widget.plant['image'] as String?;
+    final bool isUrlValid = imageUrl != null && imageUrl.isNotEmpty && Uri.tryParse(imageUrl)?.hasAbsolutePath == true;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -156,10 +159,14 @@ class _PlantScreenState extends State<PlantScreen> {
                   child: ClipOval(
                     child: Container(
                       padding: EdgeInsets.all(30),
-                      child: Image.network(
-                        widget.plant['image']!,
-                        fit: BoxFit.contain,
-                      ),
+                      child: isUrlValid
+                          ? CachedNetworkImage(
+                              imageUrl: imageUrl,
+                              placeholder: (context, url) => Center(child: CircularProgressIndicator(color: Colors.white)),
+                              errorWidget: (context, url, error) => Center(child: Icon(Icons.error, color: Colors.red, size: 50)),
+                              fit: BoxFit.contain,
+                            )
+                          : Center(child: Icon(Icons.image_not_supported, color: Colors.white, size: 50)),
                     ),
                   ),
                 ),
@@ -187,7 +194,7 @@ class _PlantScreenState extends State<PlantScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    widget.plant['name']!,
+                                    widget.plant['name'] ?? 'No Name',
                                     style: TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.bold,
@@ -196,7 +203,7 @@ class _PlantScreenState extends State<PlantScreen> {
                                   ),
                                   SizedBox(height: 8),
                                   Text(
-                                    widget.plant['price']!.toString(),
+                                    widget.plant['price']?.toString() ?? '\$0.0',
                                     style: TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.w600,
@@ -258,9 +265,10 @@ class _PlantScreenState extends State<PlantScreen> {
                         Row(
                           children: [
                             ...List.generate(5, (index) {
+                              final rating = widget.plant['rating'] ?? 0;
                               return Icon(
                                 Icons.star,
-                                color: index < widget.plant['rating']!.toInt()
+                                color: index < (rating is int ? rating : (rating as double).toInt())
                                     ? Colors.amber
                                     : Colors.grey[300],
                                 size: 20,
@@ -268,7 +276,7 @@ class _PlantScreenState extends State<PlantScreen> {
                             }),
                             SizedBox(width: 8),
                             Text(
-                              '${widget.plant['rating']!} (${widget.plant['reviews']!} reviews)',
+                              '${widget.plant['rating'] ?? 0} (${widget.plant['reviews'] ?? 0} reviews)',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -290,7 +298,7 @@ class _PlantScreenState extends State<PlantScreen> {
                         ),
                         SizedBox(height: 12),
                         Text(
-                          '${widget.plant['description']!}',
+                          '${widget.plant['description'] ?? 'No description available.'}',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],

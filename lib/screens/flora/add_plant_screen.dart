@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:pmsn2025_2/firebase/plants_firebase.dart';
+import 'package:pmsn2025_2/services/simple_plants_service.dart';
+import 'package:pmsn2025_2/widgets/storage_mode_selector.dart';
 
 class AddPlantScreen extends StatefulWidget {
   const AddPlantScreen({super.key});
@@ -9,7 +10,7 @@ class AddPlantScreen extends StatefulWidget {
 }
 
 class _AddPlantScreenState extends State<AddPlantScreen> {
-  PlantsFirebase? plantsFirebase;
+  final SimplePlantsService _plantsService = SimplePlantsService();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
@@ -24,7 +25,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   @override
   void initState() {
     super.initState();
-    plantsFirebase = PlantsFirebase();
+    // Inicializar el servicio híbrido si es necesario
   }
 
   @override
@@ -49,7 +50,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     });
 
     try {
-      await plantsFirebase!.insertPlant({
+      await _plantsService.insertPlant({
         "name": _nameController.text.trim(),
         "price": double.tryParse(_priceController.text.trim()) ?? 0.0,
         "image": _imageController.text.trim().isEmpty 
@@ -102,6 +103,12 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
         backgroundColor: Colors.green[600],
         foregroundColor: Colors.white,
         elevation: 0,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: Center(child: CurrentStorageModeIndicator()),
+          ),
+        ],
         centerTitle: true,
       ),
       body: Form(

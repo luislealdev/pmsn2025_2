@@ -1,11 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:pmsn2025_2/firebase/plants_firebase.dart';
+import 'package:pmsn2025_2/services/simple_plants_service.dart';
+import 'package:pmsn2025_2/services/firebase_error_notification_service.dart';
+import 'package:pmsn2025_2/utils/database_cleaner.dart';
+import 'package:pmsn2025_2/widgets/storage_mode_selector.dart';
+import 'package:pmsn2025_2/widgets/firebase_error_banner.dart';
 import 'package:pmsn2025_2/screens/flora/add_plant_screen.dart';
 import 'package:pmsn2025_2/screens/flora/plant_screen.dart';
 import 'package:pmsn2025_2/screens/flora/account_screen.dart';
 import 'package:pmsn2025_2/screens/flora/cart_screen.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:pmsn2025_2/screens/flora/storage_settings_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class FloraHomeScreen extends StatefulWidget {
   FloraHomeScreen({super.key});
@@ -15,7 +19,66 @@ class FloraHomeScreen extends StatefulWidget {
 }
 
 class _FloraHomeScreenState extends State<FloraHomeScreen> {
-  PlantsFirebase plantsFirebase = PlantsFirebase();
+  final SimplePlantsService _plantsService = SimplePlantsService();
+  final FirebaseErrorNotificationService _errorNotification = FirebaseErrorNotificationService();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    try {
+      await _plantsService.initialize();
+      print('✅ Simple Plants Service initialized');
+    } catch (e) {
+      print('❌ Error initializing service: $e');
+    }
+  }
+
+  void _showStorageModeDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => StorageSettingsScreen()),
+    );
+  }
+
+  Future<void> _clearDatabase() async {
+    // Mostrar confirmación
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Limpiar Base de Datos'),
+          content: Text('¿Estás seguro de que deseas limpiar la base de datos local? Esta acción no se puede deshacer.'),
+          actions: [
+            TextButton(
+              child: Text('Cancelar'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: Text('Limpiar', style: TextStyle(color: Colors.red)),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      try {
+        await DatabaseCleaner.clearDatabase();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Base de datos limpiada. Reinicia la app.')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al limpiar: $e')),
+        );
+      }
+    }
+  }
 
   // Image, name, price
   // final List<Map<String, String>> plants = [
@@ -32,119 +95,173 @@ class _FloraHomeScreenState extends State<FloraHomeScreen> {
       appBar: AppBar(
         elevation: 0, // Elimina completamente la elevación/sombra
         shadowColor: Colors.transparent,
-        surfaceTintColor:
-            Colors.transparent, // Elimina el tinte de superficie en Material 3
+        surfaceTintColor: Colors.transparent, // Elimina el tinte de superficie en Material 3
         leading: Icon(Icons.menu, color: Colors.black38),
         backgroundColor: Colors.white,
-        foregroundColor:
-            Colors.black, // Asegura que el color del contenido sea consistente
-        actions: [
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AccountScreen()),
-              );
-            },
-            child: Icon(Icons.account_circle_outlined, color: Colors.black38),
-          ),
-          SizedBox(width: 6),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AddPlantScreen()),
-              );
-            },
-            child: Icon(Icons.add, color: Colors.black38),
-          ),
-          SizedBox(width: 16),
-        ],
+        foregroundColor: Colors.black, // Asegura que el color del contenido sea consistente
+        
+        // Título simple centrado
         title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Ícono de carrito en el lado izquierdo
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => CartScreen()),
-                );
-              },
-              child: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Stack(
-                  children: [
-                    Icon(
-                      Icons.shopping_cart_outlined,
-                      color: Colors.green[600],
-                      size: 24,
-                    ),
-                    // Badge de notificación (simulado)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: Colors.red[600],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        constraints: BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '3',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            Image.asset(
+              'assets/flora/flora_logo.png',
+              height: 20,
+              width: 20,
+            ),
+            SizedBox(width: 4),
+            Text(
+              "FLORA",
+              style: TextStyle(
+                color: Colors.green[700],
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
-
-            // Título centrado con logo
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+          ],
+        ),
+        
+        // Acciones simplificadas
+        actions: [
+          // Carrito compacto
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CartScreen()),
+              );
+            },
+            child: Container(
+              margin: EdgeInsets.only(right: 8),
+              padding: EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.green[50],
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Stack(
                 children: [
-                  Image.asset(
-                    'assets/flora/flora_logo.png',
-                    height: 28,
-                    width: 28,
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    color: Colors.green[600],
+                    size: 20,
                   ),
-                  SizedBox(width: 8),
-                  Text(
-                    "FLORA",
-                    style: TextStyle(
-                      color: Colors.green[700],
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24,
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.red[600],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '3',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-
-            // Espacio para balancear el diseño
-            SizedBox(width: 40),
-          ],
-        ),
+          ),
+          
+          // Menú de opciones
+          PopupMenuButton<String>(
+            icon: Icon(Icons.more_vert, color: Colors.black38, size: 20),
+            onSelected: (String value) {
+              switch (value) {
+                case 'storage':
+                  _showStorageModeDialog();
+                  break;
+                case 'account':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AccountScreen()),
+                  );
+                  break;
+                case 'add':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddPlantScreen()),
+                  );
+                  break;
+                case 'clear_db':
+                  _clearDatabase();
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                value: 'add',
+                child: Row(
+                  children: [
+                    Icon(Icons.add, color: Colors.green[600], size: 18),
+                    SizedBox(width: 8),
+                    Text('Agregar Planta'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'storage',
+                child: Row(
+                  children: [
+                    Icon(Icons.storage, color: Colors.blue[600], size: 18),
+                    SizedBox(width: 8),
+                    Text('Almacenamiento'),
+                    SizedBox(width: 4),
+                    CurrentStorageModeIndicator(showIcon: false),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'account',
+                child: Row(
+                  children: [
+                    Icon(Icons.account_circle, color: Colors.grey[600], size: 18),
+                    SizedBox(width: 8),
+                    Text('Cuenta'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'clear_db',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_forever, color: Colors.red[600], size: 18),
+                    SizedBox(width: 8),
+                    Text('Limpiar BD'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Banner de error Firebase
+            StreamBuilder<bool>(
+              stream: _errorNotification.errorStream,
+              initialData: _errorNotification.hasError,
+              builder: (context, snapshot) {
+                return FirebaseErrorBanner(
+                  showError: snapshot.data ?? false,
+                  onDismiss: () {
+                    _errorNotification.dismissError();
+                  },
+                );
+              },
+            ),
+            
+            // Contenido original
             FormField(
               builder: (context) {
                 return Padding(
@@ -174,29 +291,48 @@ class _FloraHomeScreenState extends State<FloraHomeScreen> {
             ),
             SizedBox(
               height: 160, // Define una altura específica
-              child: StreamBuilder(
-                stream: plantsFirebase.selectAllPlants(),
+              child: StreamBuilder<List<Map<String, dynamic>>>(
+                stream: _plantsService.plantsStream,
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
-                    if (snapshot.data!.docs.isEmpty) {
-                      return Text("No se encontró información");
+                    if (snapshot.data!.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.local_florist, size: 48, color: Colors.grey),
+                            SizedBox(height: 8),
+                            Text("No plants found", style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                      );
                     }
                     return ListView.builder(
                       padding: EdgeInsets.symmetric(horizontal: 20),
                       scrollDirection: Axis.horizontal,
-                      itemCount: snapshot.data!.docs.length,
+                      itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
-                        final doc = snapshot.data!.docs[index];
-                        final id = snapshot.data!.docs[index].reference.id;
-                        final plant = {
-                          ...(doc.data() as Map<String, dynamic>),
-                          "id": id,
-                        };
+                        final plant = snapshot.data![index];
                         return PlantCard(plant: plant);
                       },
                     );
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error, size: 48, color: Colors.red),
+                          SizedBox(height: 8),
+                          Text("Error loading plants", style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    );
                   } else {
-                    return Text("No se encontró información");
+                    return Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green[600]!),
+                      ),
+                    );
                   }
                 },
               ),
@@ -453,6 +589,10 @@ class PlantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Validar la URL de la imagen
+    final imageUrl = plant['image'] as String?;
+    final bool isUrlValid = imageUrl != null && imageUrl.isNotEmpty;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -471,11 +611,32 @@ class PlantCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Center(
-              child: Image.network(plant['image']!, height: 120, width: 120),
+            SizedBox(
+              height: 120,
+              width: 120,
+              child: isUrlValid
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      placeholder: (context, url) => Container(
+                        height: 120,
+                        width: 120,
+                        child: Center(child: CircularProgressIndicator(color: Colors.green[600])),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 120,
+                        width: 120,
+                        child: Center(child: Icon(Icons.error, color: Colors.red, size: 40)),
+                      ),
+                      fit: BoxFit.cover,
+                    )
+                  : Container( // Placeholder si la URL no es válida o está vacía
+                      height: 120,
+                      width: 120,
+                      child: Center(child: Icon(Icons.image_not_supported, color: Colors.grey, size: 40)),
+                    ),
             ),
-            Text(plant['name']!, style: TextStyle(fontWeight: FontWeight.bold)),
-            Text(plant['price']!.toString(), textAlign: TextAlign.left),
+            Text(plant['name'] ?? 'No Name', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(plant['price']?.toString() ?? '\$0.0', textAlign: TextAlign.left),
           ],
         ),
       ),
